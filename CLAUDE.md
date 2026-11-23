@@ -9,7 +9,7 @@ Ce projet a démarré dans une conversation claude.ai (novembre 2026) et a été
 ### 0. `app/` — l'app principale (France entière)
 - `index.html` + `app.js` + `data/mof.json` (tous les artisans dans un seul tableau, produit par `python3 scripts/build_app.py`).
 - Position : bouton « Me localiser » (`navigator.geolocation`, exige https ou localhost), recherche d'adresse avec suggestions (Géoplateforme IGN `/geocodage/search`, repli BAN), clic ou glisser sur la carte, ou une ville d'exemple. La position GPS n'est pas mémorisée ; les autres le sont (localStorage).
-- Fond **Plan IGN** (WMTS `data.geopf.fr`, couche PLANIGNV2), à la place des tuiles OSM.
+- Fond **Plan IGN vectoriel** (style `PLAN.IGN/standard.json` de la Géoplateforme) restylé dans `app/fond.js` : couleurs douces, courbes de niveau, parcelles et petits symboles retirés, noms de rue plus lisibles. Rendu par MapLibre GL 4.7.1 (cdnjs) sous Leaflet, grâce au plugin `app/vendor/leaflet-maplibre-gl.js` (copié depuis npm, licence ISC jointe). Si WebGL ou le style manquent, repli automatique sur le Plan IGN raster (WMTS). `window.mofMap` expose la carte pour les tests.
 - Si aucun MOF dans le rayon, la liste montre les 5 plus proches où qu'ils soient (utile tant que les données ne couvrent que 7 villes).
 - Pour brancher de vraies données : produire `app/data/mof.json` au même format (name, ini, job, cat, year, shop, town, cp, lat, lng, rating).
 

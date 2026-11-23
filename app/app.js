@@ -43,10 +43,10 @@ $("ex").insertAdjacentHTML("beforeend",EXAMPLES.map((c,i)=>`<button type="button
 $("chips").innerHTML=CATS.map(c=>`<button type="button" class="chip" data-c="${c}">${c}</button>`).join("");
 $("radius").value=st.radius;$("sort").value=st.sort;
 
-/* Carte : Plan IGN (Géoplateforme, WMTS) */
-const map=L.map("map",{zoomSnap:.5,maxZoom:19,minZoom:5});
-L.tileLayer("https://data.geopf.fr/wmts?SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0&LAYER=GEOGRAPHICALGRIDSYSTEMS.PLANIGNV2&STYLE=normal&TILEMATRIXSET=PM&FORMAT=image/png&TILEMATRIX={z}&TILEROW={y}&TILECOL={x}",
-  {maxZoom:19,maxNativeZoom:19,attribution:'Plan IGN &copy; <a href="https://www.ign.fr/">IGN</a>'}).addTo(map);
+/* Carte : Plan IGN vectoriel restylé (voir fond.js) */
+const map=L.map("map",{zoomSnap:.25,zoomDelta:.5,wheelPxPerZoomLevel:90,maxZoom:19,minZoom:5});
+mofFond.add(map);
+window.mofMap=map; /* utile pour tester et déboguer depuis la console */
 const pins=L.layerGroup().addTo(map);
 let circle=null,me=null,rankOf={},geoReq=0,acc=null;
 
@@ -75,7 +75,7 @@ function setPos(lat,lng,how,label,accuracy){
   if(!me){me=L.marker(st.pos,{icon:meIcon,draggable:true,zIndexOffset:3000,keyboard:false,title:"Votre position"}).addTo(map);
     me.on("dragend",()=>{const p=me.getLatLng();setPos(p.lat,p.lng,"map")})}
   else me.setLatLng(st.pos);
-  if(!circle)circle=L.circle(st.pos,{radius:st.radius*1000,color:"#d0202e",weight:2,dashArray:"6 6",fillColor:"#d0202e",fillOpacity:.04,interactive:false}).addTo(map);
+  if(!circle)circle=L.circle(st.pos,{radius:st.radius*1000,color:"#d0202e",weight:2,dashArray:"6 6",fillColor:"#d0202e",fillOpacity:.025,interactive:false}).addTo(map);
   else circle.setLatLng(st.pos);
   if(acc){map.removeLayer(acc);acc=null}
   if(accuracy&&accuracy>30)acc=L.circle(st.pos,{radius:accuracy,stroke:false,fillColor:"#12307a",fillOpacity:.12,interactive:false}).addTo(map);

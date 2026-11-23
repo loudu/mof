@@ -6,6 +6,7 @@
 <title>MOF près de moi</title>
 <meta name="description" content="Les Meilleurs Ouvriers de France autour de vous, partout en France (démonstration, artisans fictifs).">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/maplibre-gl/4.7.1/maplibre-gl.css">
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;800&family=Work+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 :root{color-scheme:light;--bg:#fff;--ink:#0d1a3a;--mute:#5a6680;--blue:#12307a;--red:#d0202e;--line:#e3e7f0;--card:#f6f8fc}
@@ -170,10 +171,13 @@ ul{list-style:none;margin:0;padding:0;display:grid;gap:10px}
     <p class="count" id="count"></p>
     <p class="far" id="far" hidden></p>
     <ul id="list"></ul>
-    <p class="note">Artisans fictifs générés pour la démonstration, autour de 7 grandes villes seulement. Votre position n'est enregistrée nulle part : elle sert seulement à demander l'adresse affichée à la Géoplateforme IGN. Fond de carte Plan IGN © IGN ; adresses Géoplateforme IGN / Base Adresse Nationale.</p>
+    <p class="note">Artisans fictifs générés pour la démonstration, autour de 7 grandes villes seulement. Votre position n'est enregistrée nulle part : elle sert seulement à demander l'adresse affichée à la Géoplateforme IGN. Fond de carte Plan IGN vectoriel © IGN ; adresses Géoplateforme IGN / Base Adresse Nationale.</p>
   </section>
 </main>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/maplibre-gl/4.7.1/maplibre-gl.js"></script>
+<script src="vendor/leaflet-maplibre-gl.js"></script>
+<script src="fond.js"></script>
 <script src="app.js"></script>
 </body>
 </html>

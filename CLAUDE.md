@@ -1,10 +1,19 @@
 # MOF près de moi
 
-Web app qui liste les **Meilleurs Ouvriers de France (MOF)** autour de l'utilisateur, sur une carte, avec une **géolocalisation fictive** (pour l'instant). Interface en français.
+Web app qui liste les **Meilleurs Ouvriers de France (MOF)** autour de l'utilisateur, sur une carte, avec géolocalisation réelle ou adresse tapée ; les **artisans restent fictifs** pour l'instant. Interface en français.
 
 Ce projet a démarré dans une conversation claude.ai (novembre 2026) et a été migré ici. Ce fichier résume tout le contexte de cette conversation.
 
-## État actuel : deux versions
+## État actuel
+
+### 0. `app/` — l'app principale (France entière)
+- `index.html` + `app.js` + `data/mof.json` (tous les artisans dans un seul tableau, produit par `python3 scripts/build_app.py`).
+- Position : bouton « Me localiser » (`navigator.geolocation`, exige https ou localhost), recherche d'adresse avec suggestions (Géoplateforme IGN `/geocodage/search`, repli BAN), clic ou glisser sur la carte, ou une ville d'exemple. La position GPS n'est pas mémorisée ; les autres le sont (localStorage).
+- Fond **Plan IGN** (WMTS `data.geopf.fr`, couche PLANIGNV2), à la place des tuiles OSM.
+- Si aucun MOF dans le rayon, la liste montre les 5 plus proches où qu'ils soient (utile tant que les données ne couvrent que 7 villes).
+- Pour brancher de vraies données : produire `app/data/mof.json` au même format (name, ini, job, cat, year, shop, town, cp, lat, lng, rating).
+
+Les deux versions ci-dessous restent pour référence.
 
 ### 1. `app-communes/` — version publiée comme artefact claude.ai
 - Lien de l'artefact : https://claude.ai/artifact/LVEHdw8u4jXEPyVwTTnPtp (il reste sur claude.ai)
@@ -44,9 +53,9 @@ Ce projet a démarré dans une conversation claude.ai (novembre 2026) et a été
 - Les fichiers HTML locaux s'ouvrent mal sur mobile.
 
 ## Prochaines étapes proposées
-1. Vérifier `app-rues/mof-carte-rues.html` dans un vrai navigateur : tuiles OSM et adresses.
-2. Héberger l'app pour avoir un lien utilisable sur téléphone.
-3. Une fois l'app hébergée : remplacer ou compléter la position fictive par la vraie (`navigator.geolocation`, qui exige HTTPS).
+1. ~~Vérifier `app-rues`~~ : fait le 23/11/2026, tuiles OSM et adresses fonctionnent.
+2. Héberger `app/` en https (Cloudflare Pages + Cloudflare Access pour un accès privé a été proposé ; pas de GitHub Pages pour l'instant).
+3. ~~Position réelle~~ : fait dans `app/`.
 4. Plus tard : une vraie source de données MOF à la place des artisans fictifs (vérifier licence et droits).
 
 ## Conventions

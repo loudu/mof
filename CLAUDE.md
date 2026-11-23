@@ -45,7 +45,7 @@ Ce projet a démarré dans une conversation claude.ai (novembre 2026) et a été
 
 ## Prochaines étapes proposées
 1. Vérifier `app-rues/mof-carte-rues.html` dans un vrai navigateur : tuiles OSM et adresses.
-2. Héberger l'app (GitHub Pages par exemple) pour avoir un lien utilisable sur téléphone.
+2. Héberger l'app pour avoir un lien utilisable sur téléphone.
 3. Une fois l'app hébergée : remplacer ou compléter la position fictive par la vraie (`navigator.geolocation`, qui exige HTTPS).
 4. Plus tard : une vraie source de données MOF à la place des artisans fictifs (vérifier licence et droits).
 

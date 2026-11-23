@@ -129,7 +129,7 @@ function select(id,from){
   if(from==="list"&&st.sel===id){closePop();render();return}
   st.sel=id;render();popWasOpen=false;
   const p={...PEOPLE[id],id},k=p.lat.toFixed(5)+","+p.lng.toFixed(5);
-  if(matchMedia("(max-width:600px)").matches)$("neard").open=false;
+  if(matchMedia("(max-width:600px),(max-height:500px)").matches)$("neard").open=false;
   const nb=document.querySelector(".nearbox");const open=nb.offsetHeight>60;
   popup.options.autoPanPaddingTopLeft=[24,open?24:nb.offsetHeight+24];popup.options.autoPanPaddingBottomRight=[open?nb.offsetWidth+24:24,24];
   quietClose=true;popup.setLatLng([p.lat,p.lng]).setContent(popupHtml(p,rankOf[id]||"",geoCache[k])).openOn(map);quietClose=false;
@@ -152,7 +152,7 @@ const NearCtl=L.Control.extend({options:{position:"topright"},onAdd(){
   d.innerHTML=`<details id="neard"><summary>Les plus proches</summary><div id="near"></div><button type="button" class="fitbtn" id="fitnear">Voir les 5 plus proches dans les rues</button></details>`;
   L.DomEvent.disableClickPropagation(d);L.DomEvent.disableScrollPropagation(d);return d}});
 new NearCtl().addTo(map);
-$("neard").open=!matchMedia("(max-width:600px)").matches;
+$("neard").open=!matchMedia("(max-width:600px),(max-height:500px)").matches;
 $("near").addEventListener("click",e=>{const b=e.target.closest(".nr");b&&select(+b.dataset.id,"near")});
 $("fitnear").addEventListener("click",fitNearest);
 

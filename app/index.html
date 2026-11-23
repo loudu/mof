@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MOF près de moi</title>
+<meta name="description" content="Les Meilleurs Ouvriers de France autour de vous, partout en France (démonstration, artisans fictifs).">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;800&family=Work+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{color-scheme:light;--bg:#fff;--ink:#0d1a3a;--mute:#5a6680;--blue:#12307a;--red:#d0202e;--line:#e3e7f0;--card:#f6f8fc}
+@media(prefers-color-scheme:dark){:root{color-scheme:dark;--bg:#0a1226;--ink:#eef1f8;--mute:#9aa6c2;--blue:#8ea8f3;--line:#1f2b4a;--card:#111c38}}
+*{box-sizing:border-box;min-width:0}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 "Work Sans",system-ui,sans-serif;overflow-x:clip}
+.flag{height:6px;background:linear-gradient(90deg,#12307a 0 33.3%,#fff 33.3% 66.6%,#d0202e 66.6%)}
+header{padding:clamp(18px,2.6vw,32px) max(4vw,16px) 12px;max-width:1440px;margin:0 auto;display:flex;flex-wrap:wrap;gap:12px 32px;align-items:end;justify-content:space-between}
+h1{font:800 clamp(28px,4vw,44px)/1.05 "Playfair Display",Georgia,serif;margin:0;text-wrap:balance;color:var(--blue)}
+.sub{margin:6px 0 0;color:var(--mute);max-width:60ch}
+.loc{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+select,input[type=search],button{font:inherit;font-size:16px;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:10px;min-height:44px;padding:0 12px}
+button{cursor:pointer;font-weight:600}
+button.primary{background:var(--blue);color:var(--bg);border-color:var(--blue)}
+:focus-visible{outline:3px solid var(--red);outline-offset:2px}
+a{color:var(--blue)}
+.here{max-width:1440px;margin:0 auto;padding:0 max(4vw,16px) 12px}
+.herebox{display:flex;flex-wrap:wrap;align-items:center;gap:6px 14px;padding:10px 14px;border-radius:12px;background:var(--card);border:1px solid var(--line)}
+.dot{width:12px;height:12px;flex:none;border-radius:50%;background:var(--red);box-shadow:0 0 0 4px color-mix(in srgb,var(--red) 25%,transparent)}
+.herebox strong{font-size:17px}
+.coords{color:var(--mute);font-size:14px;font-variant-numeric:tabular-nums;white-space:nowrap}
+.herebox a{font-size:14px;margin-left:auto;white-space:nowrap}
+main{max-width:1440px;margin:0 auto;padding:4px max(4vw,16px) 48px;display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);gap:24px}
+.mapwrap{position:sticky;top:12px;align-self:start}
+#map{height:calc(100vh - 40px);min-height:440px;max-height:880px;border-radius:16px;border:1px solid var(--line)}
+.leaflet-container{font-family:"Work Sans",system-ui,sans-serif}
+.me{width:22px;height:22px;border-radius:50%;background:var(--red);border:3px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.35);position:relative;cursor:grab}
+.me::after{content:"";position:absolute;inset:-12px;border-radius:50%;border:2px solid var(--red);opacity:.6;animation:pulse 2s ease-out infinite}
+@keyframes pulse{from{transform:scale(.5);opacity:.7}to{transform:scale(1.4);opacity:0}}
+.pin{cursor:pointer}.pin svg{display:block;filter:drop-shadow(0 2px 2px rgba(0,0,0,.35))}
+.mofpop .leaflet-popup-content-wrapper{background:linear-gradient(90deg,#12307a 33%,#fff 33% 66%,#d0202e 66%) top/100% 5px no-repeat,var(--bg);padding-top:5px;color:var(--ink);border-radius:14px;overflow:hidden;box-shadow:0 10px 30px rgba(0,0,0,.25)}
+.mofpop .leaflet-popup-tip{background:var(--bg)}
+.mofpop .leaflet-popup-content{margin:14px 16px;font-size:14px;line-height:1.45}
+.mofpop a.leaflet-popup-close-button{width:32px;height:32px;font-size:22px;line-height:30px;color:var(--mute)}
+.pp-h{display:flex;gap:10px;align-items:center;padding-right:18px}
+.pp-n{flex:none;display:grid;place-items:center;width:26px;height:26px;border-radius:50%;background:#12307a;color:#fff;font-weight:700;font-size:13px}
+.pp-name{font:700 18px/1.2 "Playfair Display",Georgia,serif}
+.pp-job{color:var(--mute);font-size:14px}
+.pp-badges{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0 8px;font-size:13px;color:var(--mute);align-items:center}
+.pp-badges .mof{background:#12307a;color:#fff;font-weight:600;padding:2px 8px;border-radius:99px}
+.mofpop p{margin:0 0 8px}
+.pp-rate{color:var(--mute);font-size:13px}.pp-rate span{color:#d0a000}
+.pp-act{display:flex;gap:8px;flex-wrap:wrap}
+.mofpop .btn{display:inline-flex;align-items:center;justify-content:center;min-height:40px;padding:0 12px;border-radius:10px;background:#12307a;color:#fff!important;font-weight:600;font-size:14px;text-decoration:none;border:1px solid #12307a}
+.mofpop .btn.ghost{background:transparent;color:var(--ink)!important;border-color:var(--line)}
+.nearbox{background:var(--bg);color:var(--ink);border-radius:12px;box-shadow:0 4px 16px rgba(0,0,0,.18);width:250px;max-width:calc(100vw - 90px);overflow:hidden}
+.nearbox summary{cursor:pointer;padding:10px 12px;font-weight:600;font-size:14px;list-style:none;display:flex;justify-content:space-between}
+.nearbox summary::after{content:"▾";color:var(--mute)}.nearbox details[open] summary::after{content:"▴"}
+.nearbox summary::-webkit-details-marker{display:none}
+.nr{display:flex;align-items:center;gap:8px;width:100%;min-height:48px;border:0;border-top:1px solid var(--line);border-radius:0;background:transparent;text-align:left;padding:6px 12px;font-weight:400}
+.nr:hover,.nr.on{background:var(--card)}.nr.on .pp-n{background:#d0202e}
+.nr-t{flex:1;display:flex;flex-direction:column;line-height:1.2;overflow:hidden}
+.nr-t b{font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.nr-t small{font-size:12px;color:var(--mute)}
+.nr-d{font-size:13px;font-weight:600;white-space:nowrap;font-variant-numeric:tabular-nums}
+.nr-empty{margin:0;padding:10px 12px;border-top:1px solid var(--line);font-size:13px;color:var(--mute)}
+.fitbtn{width:100%;border:0;border-top:1px solid var(--line);border-radius:0;font-size:13px;color:var(--blue);background:transparent;min-height:40px}
+.toast{position:absolute;left:50%;bottom:16px;transform:translateX(-50%);z-index:1000;background:var(--ink);color:var(--bg);padding:8px 14px;border-radius:10px;font-size:14px;opacity:0;transition:opacity .3s;pointer-events:none;max-width:90%}
+.toast.show{opacity:1}
+.tag{font-size:12px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:var(--red);border:1px solid currentColor;border-radius:99px;padding:2px 10px;white-space:nowrap}
+.loc{flex:1 1 420px;max-width:620px;flex-direction:column;flex-wrap:nowrap;align-items:stretch}
+.locrow{display:flex;gap:8px;flex-wrap:wrap;align-items:flex-start}
+[hidden]{display:none!important}
+.locrow>*{flex:1 1 auto}
+.search{position:relative;flex:3 1 240px}
+.search input{width:100%}
+#sugg{position:absolute;z-index:1200;left:0;right:0;top:calc(100% + 4px);background:var(--bg);border:1px solid var(--line);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,.18);display:grid;gap:0;overflow:hidden}
+#sugg button{border:0;border-radius:0;border-top:1px solid var(--line);text-align:left;font-weight:400;width:100%;min-height:44px;padding:6px 12px;display:flex;flex-direction:column;line-height:1.25;justify-content:center}
+#sugg button:first-child{border-top:0}
+#sugg button small{color:var(--mute);font-size:12px}
+#sugg button:hover,#sugg button.on{background:var(--card)}
+#gps{flex:1 1 150px;display:inline-flex;align-items:center;justify-content:center;gap:8px}
+#gps svg{flex:none}
+.exrow{font-size:13px;color:var(--mute);display:flex;flex-wrap:wrap;gap:4px 8px;align-items:center}
+.exrow button{min-height:32px;padding:0 10px;font-size:13px;font-weight:500;border-radius:99px}
+.far{font-size:14px;color:var(--ink);background:var(--card);border:1px dashed var(--red);border-radius:12px;padding:10px 12px;margin:0 0 10px}
+.hint{font-size:13px;color:var(--mute);margin:8px 2px 0}
+.controls{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px;margin-bottom:12px}
+.controls .full{grid-column:1/-1}
+label.r{display:flex;flex-direction:column;gap:4px;font-size:14px;color:var(--mute)}
+input[type=range]{accent-color:var(--red);width:100%;min-height:32px}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{min-height:36px;padding:0 12px;border-radius:99px;font-weight:500;font-size:14px}
+.chip[aria-pressed=true]{background:var(--blue);color:var(--bg);border-color:var(--blue)}
+.count{font-size:14px;color:var(--mute);margin:4px 0 10px}
+ul{list-style:none;margin:0;padding:0;display:grid;gap:10px}
+.card{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:14px;align-items:center;padding:14px;border-radius:14px;background:var(--card);border:1px solid var(--line);cursor:pointer;transition:border-color .2s,transform .2s}
+.card:hover,.card.on{border-color:var(--red)}
+.card.on{transform:translateX(4px)}
+.av{width:48px;height:48px;border-radius:50%;display:grid;place-items:center;font:700 17px "Playfair Display",serif;color:#fff;background:#12307a;position:relative}
+.av::after{content:"";position:absolute;bottom:-3px;left:8px;right:8px;height:5px;border-radius:3px;background:linear-gradient(90deg,#12307a 33%,#fff 33% 66%,#d0202e 66%)}
+.nm{font-weight:600;font-size:17px;line-height:1.25}
+.mt{color:var(--mute);font-size:14px}
+.km{font-weight:600;white-space:nowrap;text-align:right;font-variant-numeric:tabular-nums}
+.km small{display:block;font-weight:400;color:var(--mute);font-size:13px}
+.empty{padding:28px;text-align:center;color:var(--mute);border:1px dashed var(--line);border-radius:14px}
+.note{font-size:13px;color:var(--mute);margin-top:18px}
+@media(max-width:900px){main{grid-template-columns:minmax(0,1fr)}.mapwrap{position:static}#map{height:62vh;min-height:360px}}
+@media(max-width:600px){.controls{grid-template-columns:minmax(0,1fr)}.card{grid-template-columns:auto minmax(0,1fr)}.km{grid-column:2;text-align:left}.km small{display:inline;margin-left:6px}.herebox a{margin-left:0}}
+@media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<div class="flag"></div>
+<header>
+  <div>
+    <h1>Les Meilleurs Ouvriers de France autour de vous</h1>
+    <p class="sub">Localisez-vous ou tapez une adresse, partout en France, pour voir les artisans MOF les plus proches. <span class="tag">Artisans fictifs</span></p>
+  </div>
+  <div class="loc">
+    <div class="locrow">
+      <button id="gps" class="primary" type="button"><svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4" fill="currentColor"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="12" cy="12" r="7.5" fill="none" stroke="currentColor" stroke-width="2"/></svg>Me localiser</button>
+      <div class="search">
+        <input type="search" id="addr" placeholder="Ville ou adresse en France" aria-label="Ville ou adresse" autocomplete="off" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="sugg">
+        <div id="sugg" role="listbox" hidden></div>
+      </div>
+    </div>
+    <div class="exrow" id="ex"><span>Exemples :</span></div>
+  </div>
+</header>
+<div class="here">
+  <div class="herebox" aria-live="polite">
+    <span class="dot" aria-hidden="true"></span>
+    <span><span id="how">Vous êtes</span> <strong id="town">…</strong></span>
+    <span class="coords" id="coords"></span>
+    <a id="osm" href="https://www.openstreetmap.org" target="_blank" rel="noopener">Voir sur OpenStreetMap ↗</a>
+  </div>
+</div>
+<main>
+  <section class="mapwrap" aria-label="Carte">
+    <div style="position:relative">
+      <div id="map"></div>
+      <div class="toast" id="toast"></div>
+    </div>
+    <p class="hint">Touchez une épingle pour voir la fiche de l'artisan (1 = le plus proche). Vous pouvez aussi faire glisser le point rouge ou toucher la carte pour choisir une autre position.</p>
+  </section>
+  <section aria-label="Liste des artisans">
+    <div class="controls">
+      <input class="full" type="search" id="q" placeholder="Nom, métier, commune…" aria-label="Rechercher">
+      <label class="r">Rayon : <strong id="rv">15 km</strong><input type="range" id="radius" min="1" max="50" value="15"></label>
+      <label class="r">Trier par<select id="sort"><option value="d">Distance</option><option value="y">Promotion la plus récente</option><option value="n">Nom</option></select></label>
+      <div class="chips full" id="chips"></div>
+    </div>
+    <p class="count" id="count"></p>
+    <p class="far" id="far" hidden></p>
+    <ul id="list"></ul>
+    <p class="note">Artisans fictifs générés pour la démonstration, autour de 7 grandes villes seulement. Votre position n'est enregistrée nulle part : elle sert seulement à demander l'adresse affichée à la Géoplateforme IGN. Fond de carte Plan IGN © IGN ; adresses Géoplateforme IGN / Base Adresse Nationale.</p>
+  </section>
+</main>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

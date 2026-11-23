@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MOF près de moi</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;800&family=Work+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{color-scheme:light;--bg:#fff;--ink:#0d1a3a;--mute:#5a6680;--blue:#12307a;--red:#d0202e;--line:#e3e7f0;--card:#f6f8fc}
+@media(prefers-color-scheme:dark){:root{color-scheme:dark;--bg:#0a1226;--ink:#eef1f8;--mute:#9aa6c2;--blue:#8ea8f3;--line:#1f2b4a;--card:#111c38}}
+*{box-sizing:border-box;min-width:0}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 "Work Sans",system-ui,sans-serif;overflow-x:clip}
+.flag{height:6px;background:linear-gradient(90deg,#12307a 0 33.3%,#fff 33.3% 66.6%,#d0202e 66.6%)}
+header{padding:clamp(18px,2.6vw,32px) max(4vw,16px) 12px;max-width:1440px;margin:0 auto;display:flex;flex-wrap:wrap;gap:12px 32px;align-items:end;justify-content:space-between}
+h1{font:800 clamp(28px,4vw,44px)/1.05 "Playfair Display",Georgia,serif;margin:0;text-wrap:balance;color:var(--blue)}
+.sub{margin:6px 0 0;color:var(--mute);max-width:60ch}
+.loc{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+select,input[type=search],button{font:inherit;font-size:16px;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:10px;min-height:44px;padding:0 12px}
+button{cursor:pointer;font-weight:600}
+button.primary{background:var(--blue);color:var(--bg);border-color:var(--blue)}
+:focus-visible{outline:3px solid var(--red);outline-offset:2px}
+a{color:var(--blue)}
+.here{max-width:1440px;margin:0 auto;padding:0 max(4vw,16px) 12px}
+.herebox{display:flex;flex-wrap:wrap;align-items:center;gap:6px 14px;padding:10px 14px;border-radius:12px;background:var(--card);border:1px solid var(--line)}
+.dot{width:12px;height:12px;flex:none;border-radius:50%;background:var(--red);box-shadow:0 0 0 4px color-mix(in srgb,var(--red) 25%,transparent)}
+.herebox strong{font-size:17px}
+.coords{color:var(--mute);font-size:14px;font-variant-numeric:tabular-nums;white-space:nowrap}
+.herebox a{font-size:14px;margin-left:auto;white-space:nowrap}
+main{max-width:1440px;margin:0 auto;padding:4px max(4vw,16px) 48px;display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);gap:24px}
+.mapwrap{position:sticky;top:12px;align-self:start}
+#map{height:calc(100vh - 40px);min-height:440px;max-height:880px;border-radius:16px;border:1px solid var(--line)}
+.leaflet-container{font-family:"Work Sans",system-ui,sans-serif}
+.me{width:22px;height:22px;border-radius:50%;background:var(--red);border:3px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.35);position:relative;cursor:grab}
+.me::after{content:"";position:absolute;inset:-12px;border-radius:50%;border:2px solid var(--red);opacity:.6;animation:pulse 2s ease-out infinite}
+@keyframes pulse{from{transform:scale(.5);opacity:.7}to{transform:scale(1.4);opacity:0}}
+.pin{cursor:pointer}.pin svg{display:block;filter:drop-shadow(0 2px 2px rgba(0,0,0,.35))}
+.mofpop .leaflet-popup-content-wrapper{background:linear-gradient(90deg,#12307a 33%,#fff 33% 66%,#d0202e 66%) top/100% 5px no-repeat,var(--bg);padding-top:5px;color:var(--ink);border-radius:14px;overflow:hidden;box-shadow:0 10px 30px rgba(0,0,0,.25)}
+.mofpop .leaflet-popup-tip{background:var(--bg)}
+.mofpop .leaflet-popup-content{margin:14px 16px;font-size:14px;line-height:1.45}
+.mofpop a.leaflet-popup-close-button{width:32px;height:32px;font-size:22px;line-height:30px;color:var(--mute)}
+.pp-h{display:flex;gap:10px;align-items:center;padding-right:18px}
+.pp-n{flex:none;display:grid;place-items:center;width:26px;height:26px;border-radius:50%;background:#12307a;color:#fff;font-weight:700;font-size:13px}
+.pp-name{font:700 18px/1.2 "Playfair Display",Georgia,serif}
+.pp-job{color:var(--mute);font-size:14px}
+.pp-badges{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0 8px;font-size:13px;color:var(--mute);align-items:center}
+.pp-badges .mof{background:#12307a;color:#fff;font-weight:600;padding:2px 8px;border-radius:99px}
+.mofpop p{margin:0 0 8px}
+.pp-rate{color:var(--mute);font-size:13px}.pp-rate span{color:#d0a000}
+.pp-act{display:flex;gap:8px;flex-wrap:wrap}
+.mofpop .btn{display:inline-flex;align-items:center;justify-content:center;min-height:40px;padding:0 12px;border-radius:10px;background:#12307a;color:#fff!important;font-weight:600;font-size:14px;text-decoration:none;border:1px solid #12307a}
+.mofpop .btn.ghost{background:transparent;color:var(--ink)!important;border-color:var(--line)}
+.nearbox{background:var(--bg);color:var(--ink);border-radius:12px;box-shadow:0 4px 16px rgba(0,0,0,.18);width:250px;max-width:calc(100vw - 90px);overflow:hidden}
+.nearbox summary{cursor:pointer;padding:10px 12px;font-weight:600;font-size:14px;list-style:none;display:flex;justify-content:space-between}
+.nearbox summary::after{content:"▾";color:var(--mute)}.nearbox details[open] summary::after{content:"▴"}
+.nearbox summary::-webkit-details-marker{display:none}
+.nr{display:flex;align-items:center;gap:8px;width:100%;min-height:48px;border:0;border-top:1px solid var(--line);border-radius:0;background:transparent;text-align:left;padding:6px 12px;font-weight:400}
+.nr:hover,.nr.on{background:var(--card)}.nr.on .pp-n{background:#d0202e}
+.nr-t{flex:1;display:flex;flex-direction:column;line-height:1.2;overflow:hidden}
+.nr-t b{font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.nr-t small{font-size:12px;color:var(--mute)}
+.nr-d{font-size:13px;font-weight:600;white-space:nowrap;font-variant-numeric:tabular-nums}
+.nr-empty{margin:0;padding:10px 12px;border-top:1px solid var(--line);font-size:13px;color:var(--mute)}
+.fitbtn{width:100%;border:0;border-top:1px solid var(--line);border-radius:0;font-size:13px;color:var(--blue);background:transparent;min-height:40px}
+.toast{position:absolute;left:50%;bottom:16px;transform:translateX(-50%);z-index:1000;background:var(--ink);color:var(--bg);padding:8px 14px;border-radius:10px;font-size:14px;opacity:0;transition:opacity .3s;pointer-events:none;max-width:90%}
+.toast.show{opacity:1}
+.hint{font-size:13px;color:var(--mute);margin:8px 2px 0}
+.controls{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px;margin-bottom:12px}
+.controls .full{grid-column:1/-1}
+label.r{display:flex;flex-direction:column;gap:4px;font-size:14px;color:var(--mute)}
+input[type=range]{accent-color:var(--red);width:100%;min-height:32px}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{min-height:36px;padding:0 12px;border-radius:99px;font-weight:500;font-size:14px}
+.chip[aria-pressed=true]{background:var(--blue);color:var(--bg);border-color:var(--blue)}
+.count{font-size:14px;color:var(--mute);margin:4px 0 10px}
+ul{list-style:none;margin:0;padding:0;display:grid;gap:10px}
+.card{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:14px;align-items:center;padding:14px;border-radius:14px;background:var(--card);border:1px solid var(--line);cursor:pointer;transition:border-color .2s,transform .2s}
+.card:hover,.card.on{border-color:var(--red)}
+.card.on{transform:translateX(4px)}
+.av{width:48px;height:48px;border-radius:50%;display:grid;place-items:center;font:700 17px "Playfair Display",serif;color:#fff;background:#12307a;position:relative}
+.av::after{content:"";position:absolute;bottom:-3px;left:8px;right:8px;height:5px;border-radius:3px;background:linear-gradient(90deg,#12307a 33%,#fff 33% 66%,#d0202e 66%)}
+.nm{font-weight:600;font-size:17px;line-height:1.25}
+.mt{color:var(--mute);font-size:14px}
+.km{font-weight:600;white-space:nowrap;text-align:right;font-variant-numeric:tabular-nums}
+.km small{display:block;font-weight:400;color:var(--mute);font-size:13px}
+.empty{padding:28px;text-align:center;color:var(--mute);border:1px dashed var(--line);border-radius:14px}
+.note{font-size:13px;color:var(--mute);margin-top:18px}
+@media(max-width:900px){main{grid-template-columns:minmax(0,1fr)}.mapwrap{position:static}#map{height:62vh;min-height:360px}}
+@media(max-width:600px){.controls{grid-template-columns:minmax(0,1fr)}.card{grid-template-columns:auto minmax(0,1fr)}.km{grid-column:2;text-align:left}.km small{display:inline;margin-left:6px}.herebox a{margin-left:0}}
+@media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<div class="flag"></div>
+<header>
+  <div>
+    <h1>Les Meilleurs Ouvriers de France autour de vous</h1>
+    <p class="sub">Trouvez un artisan titré MOF près de votre position : pâtissier, ébéniste, coiffeur, ferronnier…</p>
+  </div>
+  <div class="loc">
+    <select id="city" aria-label="Ville simulée"></select>
+    <button id="jitter" class="primary" type="button">Simuler un déplacement</button>
+  </div>
+</header>
+<div class="here">
+  <div class="herebox" aria-live="polite">
+    <span class="dot" aria-hidden="true"></span>
+    <span>Vous êtes <strong id="town">…</strong></span>
+    <span class="coords" id="coords"></span>
+    <a id="osm" href="https://www.openstreetmap.org" target="_blank" rel="noopener">Voir sur OpenStreetMap ↗</a>
+  </div>
+</div>
+<main>
+  <section class="mapwrap" aria-label="Carte">
+    <div style="position:relative">
+      <div id="map"></div>
+      <div class="toast" id="toast"></div>
+    </div>
+    <p class="hint">Touchez une épingle pour voir la fiche de l'artisan (1 = le plus proche). Faites glisser le point rouge ou touchez la carte pour déplacer votre position simulée.</p>
+  </section>
+  <section aria-label="Liste des artisans">
+    <div class="controls">
+      <input class="full" type="search" id="q" placeholder="Nom, métier, commune…" aria-label="Rechercher">
+      <label class="r">Rayon : <strong id="rv">15 km</strong><input type="range" id="radius" min="1" max="50" value="15"></label>
+      <label class="r">Trier par<select id="sort"><option value="d">Distance</option><option value="y">Promotion la plus récente</option><option value="n">Nom</option></select></label>
+      <div class="chips full" id="chips"></div>
+    </div>
+    <p class="count" id="count"></p>
+    <ul id="list"></ul>
+    <p class="note">Artisans fictifs générés pour la démonstration ; la position est simulée. Fond de carte © contributeurs OpenStreetMap ; adresses par la Géoplateforme IGN / Base Adresse Nationale.</p>
+  </section>
+</main>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script>const DATA=/*DATA*/;</script>
+<script>
+{
+const CATS=["Tous","Bouche","Bois & pierre","Métal","Mode & beauté","Art & décor"];
+const HOOK={"Pâtissier-confiseur":"Entremets de saison, macarons et pièces montées sur commande.","Boulanger":"Pains au levain naturel, farines de meunerie locale.","Chocolatier":"Ganaches infusées et tablettes bean-to-bar.","Cuisinier":"Table de 20 couverts, menu du marché.","Fromager":"Affinage en cave voûtée, plus de 120 fromages.","Boucher-charcutier":"Viandes maturées, pâté-croûte maison.","Glacier":"Sorbets plein fruit, parfums renouvelés chaque semaine.","Ébéniste":"Mobilier sur mesure et restauration d'ancien.","Charpentier":"Charpentes traditionnelles assemblées à la main.","Tailleur de pierre":"Restauration de patrimoine et sculpture ornementale.","Menuisier":"Escaliers, portes et agencements sur mesure.","Ferronnier d'art":"Rampes, grilles et portails forgés à la main.","Coutelier":"Couteaux forgés, affûtage et réparation.","Orfèvre":"Pièces uniques en argent massif, restauration.","Horloger":"Réparation de montres mécaniques et pendules.","Coiffeur":"Coupe ciseaux, coloration végétale, sur rendez-vous.","Tailleur":"Costumes en grande mesure, trois essayages.","Bottier":"Chaussures sur mesure cousues main.","Maroquinier":"Sacs et petite maroquinerie au point sellier.","Brodeur":"Broderie main pour la mode et l'ameublement.","Verrier":"Vitraux et verre soufflé, atelier ouvert le samedi.","Céramiste":"Grès et porcelaine tournés, cuisson au bois.","Doreur":"Dorure à la feuille sur bois et cadres.","Relieur":"Reliure d'art et restauration de livres anciens.","Tapissier":"Réfection de sièges en garniture traditionnelle."};
+const $=id=>document.getElementById(id);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const norm=s=>s.normalize("NFD").replace(/[̀-ͯ]/g,"").toLowerCase();
+const hav=(a,b)=>{const R=6371,t=Math.PI/180,dl=(b.lat-a.lat)*t,dg=(b.lng-a.lng)*t;
+  const h=Math.sin(dl/2)**2+Math.cos(a.lat*t)*Math.cos(b.lat*t)*Math.sin(dg/2)**2;return 2*R*Math.asin(Math.sqrt(h))};
+const fmt=d=>d<1?Math.round(d*1000)+" m":d.toFixed(1).replace(".",",")+" km";
+const walk=d=>d<2.5?Math.max(1,Math.round(d/4.5*60))+" min à pied":Math.max(1,Math.round(d/15*60))+" min à vélo";
+const deg=(v,p,n)=>Math.abs(v).toFixed(4).replace(".",",")+"° "+(v>=0?p:n);
+const osm=(lat,lng)=>`https://www.openstreetmap.org/?mlat=${lat.toFixed(5)}&mlon=${lng.toFixed(5)}#map=18/${lat.toFixed(5)}/${lng.toFixed(5)}`;
+
+/* reverse geocoding: real street name at a point (IGN Géoplateforme, fallback BAN) */
+const geoCache={};
+async function streetAt(lat,lng){
+  const k=lat.toFixed(5)+","+lng.toFixed(5);if(geoCache[k])return geoCache[k];
+  const urls=[`https://data.geopf.fr/geocodage/reverse?lon=${lng}&lat=${lat}&index=address&limit=1`,`https://api-adresse.data.gouv.fr/reverse/?lon=${lng}&lat=${lat}&limit=1`];
+  for(const u of urls){try{const r=await fetch(u);if(!r.ok)continue;const j=await r.json();const f=j.features&&j.features[0];
+    if(f){const p=f.properties,dist=hav({lat,lng},{lat:f.geometry.coordinates[1],lng:f.geometry.coordinates[0]});
+      const v={street:p.street||p.name||"",num:p.housenumber||"",cp:p.postcode||"",city:p.city||"",far:dist>0.4};geoCache[k]=v;return v}}catch(e){}}
+  return null}
+
+const st={slug:"lyon",pos:null,radius:15,cat:"Tous",q:"",sort:"d",sel:null};
+let saved=null;try{saved=JSON.parse(localStorage.getItem("mofStreet")||"null")}catch(e){}
+if(saved){for(const k of ["slug","pos","radius","cat","sort"])if(saved[k]!=null)st[k]=saved[k]}
+if(!DATA[st.slug])st.slug="lyon";
+const save=()=>{try{localStorage.setItem("mofStreet",JSON.stringify({slug:st.slug,pos:st.pos,radius:st.radius,cat:st.cat,sort:st.sort}))}catch(e){}};
+
+$("city").innerHTML=Object.entries(DATA).map(([s,c])=>`<option value="${s}">${c.name}</option>`).join("");
+$("chips").innerHTML=CATS.map(c=>`<button type="button" class="chip" data-c="${c}">${c}</button>`).join("");
+$("city").value=st.slug;$("radius").value=st.radius;$("sort").value=st.sort;
+
+const map=L.map("map",{zoomSnap:.5,maxZoom:19,minZoom:6});
+L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png",{maxZoom:19,attribution:'&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'}).addTo(map);
+const pins=L.layerGroup().addTo(map);
+let D=DATA[st.slug],circle=null,me=null,rankOf={},geoReq=0;
+
+const meIcon=L.divIcon({className:"",html:'<div class="me"></div>',iconSize:[22,22],iconAnchor:[11,11]});
+const pinIcon=(n,on)=>{const top=n<=3,s=on?1.5:top?1.25:1,w=Math.round(26*s),h=Math.round(34*s),c=on?"#d0202e":"#12307a";
+  return L.divIcon({className:"pin",iconSize:[w,h],iconAnchor:[w/2,h],
+    html:`<svg width="${w}" height="${h}" viewBox="0 0 26 34"><path d="M13 33C13 33 2 19.5 2 12.5a11 11 0 0 1 22 0C24 19.5 13 33 13 33z" fill="${c}" stroke="#fff" stroke-width="1.8"/><circle cx="13" cy="12.5" r="7.5" fill="#fff"/><text x="13" y="16.4" text-anchor="middle" font-size="${n>9?9.5:11}" font-weight="700" font-family="Work Sans,sans-serif" fill="${c}">${n}</text></svg>`})};
+const popup=L.popup({maxWidth:290,minWidth:240,autoPanPadding:[24,24],className:"mofpop"});
+let quietClose=false;
+popup.on("remove",()=>{if(quietClose||st.sel===null)return;st.sel=null;render()});
+const dirUrl=p=>`https://www.openstreetmap.org/directions?engine=fossgis_osrm_foot&route=${st.pos.lat.toFixed(5)}%2C${st.pos.lng.toFixed(5)}%3B${p.lat.toFixed(5)}%2C${p.lng.toFixed(5)}`;
+const addrHtml=(p,g)=>g&&g.street&&!g.far?`${esc(g.street)}<br>${esc(g.cp||p.cp)} ${esc(g.city||p.town)}`:`${esc(p.cp)} ${esc(p.town)}`;
+function popupHtml(p,n,g){const d=hav(st.pos,p);
+  return `<div class="pp"><div class="pp-h"><span class="pp-n">${n}</span><div><div class="pp-name">${esc(p.name)}</div><div class="pp-job">${esc(p.job)}</div></div></div>
+  <div class="pp-badges"><span class="mof">MOF ${p.year}</span><span>${fmt(d)} · ${walk(d)}</span></div>
+  <p><strong>${esc(p.shop)}</strong><br><span id="pp-addr">${addrHtml(p,g)}</span></p>
+  <p>${esc(HOOK[p.job]||"")}</p>
+  <p class="pp-rate"><span aria-hidden="true">★</span> ${String(p.rating).replace(".",",")} / 5 · ${esc(p.cat)}</p>
+  <div class="pp-act"><a class="btn" href="${dirUrl(p)}" target="_blank" rel="noopener">Itinéraire ↗</a><button type="button" class="btn ghost" data-list="${p.id}">Voir dans la liste</button></div></div>`}
+
+function toast(msg){const t=$("toast");t.textContent=msg;t.classList.add("show");clearTimeout(toast.h);toast.h=setTimeout(()=>t.classList.remove("show"),2200)}
+function nearestTown(lat,lng){let best=null,bd=1e9;for(const c of D.info){const d=hav({lat,lng},{lat:c[2],lng:c[3]});if(d<bd){bd=d;best=c}}return best}
+
+function setPos(lat,lng,how){
+  st.pos={lat,lng};closePop();
+  if(!me){me=L.marker(st.pos,{icon:meIcon,draggable:true,zIndexOffset:3000,keyboard:false,title:"Votre position simulée"}).addTo(map);
+    me.on("dragend",()=>{const p=me.getLatLng();setPos(p.lat,p.lng,"drag")})}
+  else me.setLatLng(st.pos);
+  if(!circle)circle=L.circle(st.pos,{radius:st.radius*1000,color:"#d0202e",weight:2,dashArray:"6 6",fillColor:"#d0202e",fillOpacity:.04,interactive:false}).addTo(map);
+  else circle.setLatLng(st.pos);
+  const t=nearestTown(lat,lng);
+  $("town").textContent=t?`à ${t[0]} (${t[1]})`:"ici";
+  $("coords").textContent=`${deg(lat,"N","S")}, ${deg(lng,"E","O")}`;
+  $("osm").href=osm(lat,lng);
+  const req=++geoReq;
+  streetAt(lat,lng).then(g=>{if(req!==geoReq||!g||!g.street)return;
+    $("town").textContent=(g.far?"près de ":"")+(g.num&&!g.far?g.num+" ":"")+g.street+", "+g.cp+" "+g.city});
+  render();
+  if(how==="jitter"||how==="load")fitNearest();
+  save();return true}
+
+function visible(){
+  const q=norm(st.q.trim());
+  let r=D.people.map((p,id)=>({...p,id,d:hav(st.pos,p)})).filter(p=>p.d<=st.radius&&(st.cat==="Tous"||p.cat===st.cat)
+    &&(!q||norm(p.name+" "+p.job+" "+p.shop+" "+p.town).includes(q)));
+  r.sort(st.sort==="d"?(a,b)=>a.d-b.d:st.sort==="y"?(a,b)=>b.year-a.year||a.d-b.d:(a,b)=>a.name.localeCompare(b.name,"fr"));
+  return r}
+
+function render(){
+  if(!st.pos)return;const r=visible();
+  $("rv").textContent=st.radius+" km";
+  document.querySelectorAll(".chip").forEach(b=>b.setAttribute("aria-pressed",b.dataset.c===st.cat));
+  $("count").textContent=r.length?`${r.length} artisan${r.length>1?"s":""} MOF à moins de ${st.radius} km`:"";
+  const byDist=[...r].sort((a,b)=>a.d-b.d);rankOf={};byDist.forEach((p,k)=>rankOf[p.id]=k+1);
+  $("list").innerHTML=r.length?r.map(p=>`<li class="card${st.sel===p.id?" on":""}" data-id="${p.id}" tabindex="0">
+    <div class="av" aria-hidden="true">${esc(p.ini)}</div>
+    <div><div class="nm">${rankOf[p.id]}. ${esc(p.name)}</div><div class="mt">${esc(p.job)} · MOF ${p.year} · ${esc(p.town)}</div></div>
+    <div class="km">${fmt(p.d)}<small>${walk(p.d)}</small></div></li>`).join("")
+    :`<li class="empty">Aucun artisan MOF ne correspond dans ce rayon. Élargissez le rayon ou changez de catégorie.</li>`;
+  pins.clearLayers();
+  byDist.forEach(p=>{const on=st.sel===p.id,n=rankOf[p.id];
+    const m=L.marker([p.lat,p.lng],{icon:pinIcon(n,on),zIndexOffset:on?2000:900-n*10,title:`${n}. ${p.name} — ${p.job}, ${fmt(p.d)}`,keyboard:false,riseOnHover:true});
+    m.on("click",ev=>{L.DomEvent.stopPropagation(ev);select(p.id,"map")});pins.addLayer(m)});
+  $("near").innerHTML=byDist.length?byDist.slice(0,3).map(p=>`<button type="button" class="nr${st.sel===p.id?" on":""}" data-id="${p.id}"><span class="pp-n">${rankOf[p.id]}</span><span class="nr-t"><b>${esc(p.name)}</b><small>${esc(p.job)}</small></span><span class="nr-d">${fmt(p.d)}</span></button>`).join("")
+    :`<p class="nr-empty">Aucun MOF dans ce rayon.</p>`;
+  save()}
+
+function closePop(){if(st.sel===null&&!map.hasLayer(popup))return;st.sel=null;quietClose=true;map.closePopup(popup);quietClose=false}
+
+function select(id,from){
+  if(from==="list"&&st.sel===id){closePop();render();return}
+  st.sel=id;render();popWasOpen=false;
+  const p={...D.people[id],id},k=p.lat.toFixed(5)+","+p.lng.toFixed(5);
+  if(matchMedia("(max-width:600px)").matches)$("neard").open=false;
+  const nb=document.querySelector(".nearbox");const open=nb.offsetHeight>60;
+  popup.options.autoPanPaddingTopLeft=[24,open?24:nb.offsetHeight+24];popup.options.autoPanPaddingBottomRight=[open?nb.offsetWidth+24:24,24];
+  quietClose=true;popup.setLatLng([p.lat,p.lng]).setContent(popupHtml(p,rankOf[id]||"",geoCache[k])).openOn(map);quietClose=false;
+  const el=popup.getElement();
+  const lb=el&&el.querySelector("[data-list]");
+  if(lb)lb.addEventListener("click",()=>{const c=document.querySelector(`.card[data-id="${id}"]`);if(c){c.scrollIntoView({behavior:"smooth",block:"center"});c.focus({preventScroll:true})}});
+  if(!geoCache[k])streetAt(p.lat,p.lng).then(g=>{const a=document.getElementById("pp-addr");if(g&&a&&st.sel===id)a.innerHTML=addrHtml(p,g)});
+  if(from==="list"||from==="near"){if(map.getZoom()<15)map.setView([p.lat,p.lng],16);else map.panTo([p.lat,p.lng])}
+  if(from==="list"&&matchMedia("(max-width:900px)").matches)$("map").scrollIntoView({behavior:"smooth",block:"start"})}
+
+/* frame me + the 5 nearest; in town this lands at street level */
+function fitNearest(){
+  if(!st.pos)return;const r=visible().sort((a,b)=>a.d-b.d).slice(0,5);
+  if(!r.length){fitRadius();return}
+  map.fitBounds(L.latLngBounds([st.pos,...r.map(p=>[p.lat,p.lng])]),{padding:[50,50],maxZoom:17})}
+function fitRadius(){if(circle){circle.setRadius(st.radius*1000);map.fitBounds(circle.getBounds(),{padding:[16,16]})}}
+
+const NearCtl=L.Control.extend({options:{position:"topright"},onAdd(){
+  const d=L.DomUtil.create("div","nearbox");
+  d.innerHTML=`<details id="neard"><summary>Les plus proches</summary><div id="near"></div><button type="button" class="fitbtn" id="fitnear">Voir les 5 plus proches dans les rues</button></details>`;
+  L.DomEvent.disableClickPropagation(d);L.DomEvent.disableScrollPropagation(d);return d}});
+new NearCtl().addTo(map);
+$("neard").open=!matchMedia("(max-width:600px)").matches;
+$("near").addEventListener("click",e=>{const b=e.target.closest(".nr");b&&select(+b.dataset.id,"near")});
+$("fitnear").addEventListener("click",fitNearest);
+
+function loadCity(slug,keepPos){
+  D=DATA[slug];st.slug=slug;closePop();
+  const start=keepPos&&st.pos&&hav(st.pos,{lat:D.lat,lng:D.lng})<60?st.pos:{lat:D.lat,lng:D.lng};
+  map.setView(start,14,{animate:false});
+  setPos(start.lat,start.lng,"load")}
+
+let popWasOpen=false;
+map.on("preclick",()=>{popWasOpen=map.hasLayer(popup)});
+map.on("click",e=>{if(popWasOpen){popWasOpen=false;return}setPos(e.latlng.lat,e.latlng.lng,"click")});
+$("city").addEventListener("change",e=>loadCity(e.target.value,false));
+$("jitter").addEventListener("click",()=>{const r=.3+Math.random()*2.5,a=Math.random()*Math.PI*2;
+  setPos(st.pos.lat+r*Math.sin(a)/111,st.pos.lng+r*Math.cos(a)/(111*Math.cos(st.pos.lat*Math.PI/180)),"jitter");toast("Déplacé de "+fmt(r))});
+$("radius").addEventListener("input",e=>{st.radius=+e.target.value;if(circle)circle.setRadius(st.radius*1000);render()});
+$("radius").addEventListener("change",fitRadius);
+$("sort").addEventListener("change",e=>{st.sort=e.target.value;render()});
+$("q").addEventListener("input",e=>{st.q=e.target.value;render()});
+$("chips").addEventListener("click",e=>{const b=e.target.closest(".chip");if(b){st.cat=b.dataset.c;closePop();render();fitNearest()}});
+$("list").addEventListener("click",e=>{const c=e.target.closest(".card");c&&select(+c.dataset.id,"list")});
+$("list").addEventListener("keydown",e=>{const c=e.target.closest(".card");if(c&&(e.key==="Enter"||e.key===" ")){e.preventDefault();select(+c.dataset.id,"list")}});
+loadCity(st.slug,true);
+}
+</script>
+</body>
+</html>

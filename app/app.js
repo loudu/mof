@@ -51,16 +51,21 @@ const pins=L.layerGroup().addTo(map);
 let circle=null,me=null,rankOf={},geoReq=0,acc=null;
 
 const meIcon=L.divIcon({className:"",html:'<div class="me"></div>',iconSize:[22,22],iconAnchor:[11,11]});
-const pinIcon=(n,on)=>{const top=n<=3,s=on?1.5:top?1.25:1,w=Math.round(26*s),h=Math.round(34*s),c=on?"#d0202e":"#12307a";
+/* Une icône par spécialité (emoji : lisible partout, sans fichier à charger) */
+const ICON={"Pâtissier-confiseur":"🧁","Boulanger":"🥖","Chocolatier":"🍫","Cuisinier":"🍳","Fromager":"🧀","Boucher-charcutier":"🥩","Glacier":"🍦",
+  "Ébéniste":"🪑","Charpentier":"🪚","Tailleur de pierre":"🧱","Menuisier":"🚪","Ferronnier d'art":"⚒️","Coutelier":"🔪","Orfèvre":"💍","Horloger":"⌚",
+  "Coiffeur":"✂️","Tailleur":"👔","Bottier":"👞","Maroquinier":"👜","Brodeur":"🧵","Verrier":"🪟","Céramiste":"🏺","Doreur":"🖼️","Relieur":"📚","Tapissier":"🛋️"};
+const icon=job=>ICON[job]||"⭐";
+const pinIcon=(p,n,on)=>{const top=n<=3,s=on?1.4:top?1.18:1,w=Math.round(32*s),h=Math.round(41*s),c=on?"#d0202e":"#12307a";
   return L.divIcon({className:"pin",iconSize:[w,h],iconAnchor:[w/2,h],
-    html:`<svg width="${w}" height="${h}" viewBox="0 0 26 34"><path d="M13 33C13 33 2 19.5 2 12.5a11 11 0 0 1 22 0C24 19.5 13 33 13 33z" fill="${c}" stroke="#fff" stroke-width="1.8"/><circle cx="13" cy="12.5" r="7.5" fill="#fff"/><text x="13" y="16.4" text-anchor="middle" font-size="${n>9?9.5:11}" font-weight="700" font-family="Work Sans,sans-serif" fill="${c}">${n}</text></svg>`})};
+    html:`<svg width="${w}" height="${h}" viewBox="0 0 32 41" aria-hidden="true"><path d="M16 40C16 40 2.5 24 2.5 15.5a13.5 13.5 0 0 1 27 0C29.5 24 16 40 16 40z" fill="${c}" stroke="#fff" stroke-width="2"/><circle cx="16" cy="15.5" r="10" fill="#fff"/></svg><span class="pin-i" style="font-size:${Math.round(13*s)}px;top:${Math.round(15.5*s)}px">${icon(p.job)}</span>`})};
 const popup=L.popup({maxWidth:290,minWidth:240,autoPanPadding:[24,24],className:"mofpop"});
 let quietClose=false;
 popup.on("remove",()=>{if(quietClose||st.sel===null)return;st.sel=null;render()});
 const dirUrl=p=>`https://www.openstreetmap.org/directions?engine=fossgis_osrm_foot&route=${st.pos.lat.toFixed(5)}%2C${st.pos.lng.toFixed(5)}%3B${p.lat.toFixed(5)}%2C${p.lng.toFixed(5)}`;
 const addrHtml=(p,g)=>g&&g.street&&!g.far?`${esc(g.street)}<br>${esc(g.cp||p.cp)} ${esc(g.city||p.town)}`:`${esc(p.cp)} ${esc(p.town)}`;
 function popupHtml(p,n,g){const d=hav(st.pos,p);
-  return `<div class="pp"><div class="pp-h"><span class="pp-n">${n}</span><div><div class="pp-name">${esc(p.name)}</div><div class="pp-job">${esc(p.job)}</div></div></div>
+  return `<div class="pp"><div class="pp-h"><span class="pp-n" aria-hidden="true">${icon(p.job)}</span><div><div class="pp-name">${esc(p.name)}</div><div class="pp-job">${esc(p.job)}</div></div></div>
   <div class="pp-badges"><span class="mof">MOF ${p.year}</span><span>${fmt(d)} · ${walk(d)}</span></div>
   <p><strong>${esc(p.shop)}</strong><br><span id="pp-addr">${addrHtml(p,g)}</span></p>
   <p>${esc(HOOK[p.job]||"")}</p>
@@ -117,9 +122,9 @@ function render(){
     :`<li class="empty">Aucun artisan MOF ne correspond à cette recherche. Changez de catégorie ou effacez la recherche.</li>`;
   pins.clearLayers();
   byDist.forEach(p=>{const on=st.sel===p.id,n=rankOf[p.id];
-    const m=L.marker([p.lat,p.lng],{icon:pinIcon(n,on),zIndexOffset:on?2000:900-n*10,title:`${n}. ${p.name} — ${p.job}, ${fmt(p.d)}`,keyboard:false,riseOnHover:true});
+    const m=L.marker([p.lat,p.lng],{icon:pinIcon(p,n,on),zIndexOffset:on?2000:900-n*10,title:`${n}. ${p.name} — ${p.job}, ${fmt(p.d)}`,keyboard:false,riseOnHover:true});
     m.on("click",ev=>{L.DomEvent.stopPropagation(ev);select(p.id,"map")});pins.addLayer(m)});
-  $("near").innerHTML=byDist.length?byDist.slice(0,3).map(p=>`<button type="button" class="nr${st.sel===p.id?" on":""}" data-id="${p.id}"><span class="pp-n">${rankOf[p.id]}</span><span class="nr-t"><b>${esc(p.name)}</b><small>${esc(p.job)}</small></span><span class="nr-d">${fmt(p.d)}</span></button>`).join("")
+  $("near").innerHTML=byDist.length?byDist.slice(0,3).map(p=>`<button type="button" class="nr${st.sel===p.id?" on":""}" data-id="${p.id}"><span class="pp-n" aria-hidden="true">${icon(p.job)}</span><span class="nr-t"><b>${esc(p.name)}</b><small>${esc(p.job)}</small></span><span class="nr-d">${fmt(p.d)}</span></button>`).join("")
     :`<p class="nr-empty">Aucun MOF ne correspond.</p>`;
   save()}
 

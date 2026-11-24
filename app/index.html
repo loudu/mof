@@ -36,13 +36,14 @@ main{max-width:1440px;margin:0 auto;padding:4px max(4vw,16px) 48px;display:grid;
 .me{width:22px;height:22px;border-radius:50%;background:var(--red);border:3px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.35);position:relative;cursor:grab}
 .me::after{content:"";position:absolute;inset:-12px;border-radius:50%;border:2px solid var(--red);opacity:.6;animation:pulse 2s ease-out infinite}
 @keyframes pulse{from{transform:scale(.5);opacity:.7}to{transform:scale(1.4);opacity:0}}
-.pin{cursor:pointer}.pin svg{display:block;filter:drop-shadow(0 2px 2px rgba(0,0,0,.35))}
+.pin{cursor:pointer;position:relative}.pin svg{display:block;filter:drop-shadow(0 2px 2px rgba(0,0,0,.35))}
+.pin-i{position:absolute;left:50%;transform:translate(-50%,-50%);line-height:1;font-family:"Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif;pointer-events:none}
 .mofpop .leaflet-popup-content-wrapper{background:linear-gradient(90deg,#12307a 33%,#fff 33% 66%,#d0202e 66%) top/100% 5px no-repeat,var(--bg);padding-top:5px;color:var(--ink);border-radius:14px;overflow:hidden;box-shadow:0 10px 30px rgba(0,0,0,.25)}
 .mofpop .leaflet-popup-tip{background:var(--bg)}
 .mofpop .leaflet-popup-content{margin:14px 16px;font-size:14px;line-height:1.45}
 .mofpop a.leaflet-popup-close-button{width:32px;height:32px;font-size:22px;line-height:30px;color:var(--mute)}
 .pp-h{display:flex;gap:10px;align-items:center;padding-right:18px}
-.pp-n{flex:none;display:grid;place-items:center;width:26px;height:26px;border-radius:50%;background:#12307a;color:#fff;font-weight:700;font-size:13px}
+.pp-n{flex:none;display:grid;place-items:center;width:30px;height:30px;border-radius:50%;background:#fff;border:2px solid #12307a;font-size:15px;line-height:1;font-family:"Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif}
 .pp-name{font:700 18px/1.2 "Playfair Display",Georgia,serif}
 .pp-job{color:var(--mute);font-size:14px}
 .pp-badges{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0 8px;font-size:13px;color:var(--mute);align-items:center}
@@ -57,7 +58,7 @@ main{max-width:1440px;margin:0 auto;padding:4px max(4vw,16px) 48px;display:grid;
 .nearbox summary::after{content:"▾";color:var(--mute)}.nearbox details[open] summary::after{content:"▴"}
 .nearbox summary::-webkit-details-marker{display:none}
 .nr{display:flex;align-items:center;gap:8px;width:100%;min-height:48px;border:0;border-top:1px solid var(--line);border-radius:0;background:transparent;text-align:left;padding:6px 12px;font-weight:400}
-.nr:hover,.nr.on{background:var(--card)}.nr.on .pp-n{background:#d0202e}
+.nr:hover,.nr.on{background:var(--card)}.nr.on .pp-n{border-color:#d0202e}
 .nr-t{flex:1;display:flex;flex-direction:column;line-height:1.2;overflow:hidden}
 .nr-t b{font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.nr-t small{font-size:12px;color:var(--mute)}
 .nr-d{font-size:13px;font-weight:600;white-space:nowrap;font-variant-numeric:tabular-nums}
@@ -159,7 +160,7 @@ ul{list-style:none;margin:0;padding:0;display:grid;gap:10px}
       <div id="map"></div>
       <div class="toast" id="toast"></div>
     </div>
-    <p class="hint">Touchez une épingle pour voir la fiche de l'artisan (1 = le plus proche). Vous pouvez aussi faire glisser le point rouge ou toucher la carte pour choisir une autre position.</p>
+    <p class="hint">Touchez une épingle pour voir la fiche de l'artisan. L'icône indique son métier ; les 3 plus proches sont plus grandes. Vous pouvez aussi faire glisser le point rouge ou toucher la carte pour choisir une autre position.</p>
   </section>
   <section aria-label="Liste des artisans">
     <div class="controls">
